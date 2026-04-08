@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N3-KANJI-FLASHCARDー</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Antique+Soft&family=DM+Sans:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink: #1a1208;
+    --paper: #faf6ef;
+    --aged: #f0e8d5;
+    --fold: #e2d5bc;
+    --red: #c0392b;
+    --red-light: #e74c3c;
+    --gold: #c9a84c;
+    --gold-light: #f0c060;
+    --green: #2d7a4f;
+    --muted: #8a7a65;
+    --shadow: rgba(26,18,8,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--aged);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Paper texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(180,160,120,0.08) 32px),
+      repeating-linear-gradient(90deg, transparent, transparent 31px, rgba(180,160,120,0.04) 32px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Decorative kanji watermark */
+  body::after {
+    content: '字';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Zen Antique Soft', serif;
+    font-size: 60vw;
+    color: rgba(180,155,100,0.04);
+    pointer-events: none;
+    z-index: 0;
+    line-height: 1;
+    user-select: none;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+  }
+
+  .logo {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 22px;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+  }
+
+  .logo span {
+    color: var(--red);
+  }
+
+  .streak {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .streak .fire { font-size: 16px; }
+
+  /* ── SCORE BAR ── */
+  .score-bar {
+    background: var(--paper);
+    border-radius: 16px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 12px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.6);
+    border: 1px solid var(--fold);
+  }
+
+  .score-num {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .score-num .big {
+    font-family: 'Zen Antique Soft', serif;
+    font-size: 32px;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .score-num .sep {
+    font-size: 18px;
+    color: var(--muted);
+  }
+
+  .score-num .total {
+    font-size: 18px;
+    color: var(--muted);
+  }
+
+  .score-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .divider-v {
+    width: 1px;
+    height: 36px;
+    background: var(--fold);
+    flex-shrink: 0;
+  }
+
+  .accuracy-wrap {
+    flex: 1;
+  }
+
+  .accuracy-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .accuracy-bar-bg {
+    background: var(--fold);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .accuracy-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), #4caf7d);
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .accuracy-pct {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--green);
+    margin-top: 4px;
+  }
+
+  .score-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--fold);
+    background: var(--aged);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .icon-btn:hover {
+    background: var(--fold);
+    color: var(--ink);
+    transform: translateY(-1px);
+  }
+
+  .icon-btn.danger:hover {
+    background: #fde8e8;
+    border-color: #f5b8b8;
+    color: var(--red);
+  }
+
+  /* ── FILTER TABS ── */
+  .filter-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .filter-scroll::-webkit-scrollbar { display: none; }
+
+  .filter-tab {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border-radius: 99px;
+    border: 1.5px solid var(--fold);
+    background: var(--paper);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+  }
+
+  .filter-tab:hover {
+    border-color: var(--gold);
+    color: var(--ink);
+  }
+
+  .filter-tab.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  .filter-tab.wrong-tab.active {
+    background: var(--red);
+    border-color: var(--red);
+  }
+
+  /* ── MAIN CARD ── */
+  .card {
+    background: var(--paper);
+    border-radius: 24px;
+    padding: 40px 36px 32px;
+    box-shadow:
+      0 4px 6px rgba(0,0,0,0.04),
+      0 12px 40px var(--shadow),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+    border: 1px solid var(--fold);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative corner fold */
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 0 32px 32px 0;
+    border-color: transparent var(--aged) transparent transparent;
+    filter: drop-shadow(-2px 2px 2px var(--shadow));
+  }
+
+  /* Progress line */
+  .card-progress {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--fold);
+    border-radius: 24px 24px 0 0;
+    overflow: hidden;
+  }
+
+  .card-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    border-radius: inherit;
+    width: 0%;
+    transition: width 0.6s ease;
+  }
+
+  .group-badge {
+    position: absolute;
+    top: 18px;
+    left: 24px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* Kanji Display */
+  .kanji-stage {
+    text-align: center;
+    padding: 20px 0 28px;
+    position: relative;
+  }
+
+  .kanji-char {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 120px;
+    line-height: 1;
+    color: var(--ink);
+    display: block;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: default;
+    user-select: none;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+  }
+
+  .kanji-char.pop {
+    animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .kanji-hint {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 0.05em;
+    opacity: 0;
+    transition: opacity 0.3s;
+    min-height: 20px;
+  }
+
+  .kanji-hint.show { opacity: 1; }
+
+  /* Options Grid */
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .opt-btn {
+    padding: 16px 12px;
+    border-radius: 14px;
+    border: 1.5px solid var(--fold);
+    background: var(--aged);
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .opt-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.18s;
+  }
+
+  .opt-btn:hover:not(:disabled) {
+    border-color: var(--gold);
+    background: var(--paper);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px var(--shadow);
+  }
+
+  .opt-btn:hover:not(:disabled)::before {
+    background: rgba(255,255,255,0.4);
+  }
+
+  .opt-meaning {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .opt-furi {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    display: block;
+  }
+
+  .opt-btn.correct {
+    background: #e8f5ee;
+    border-color: var(--green);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(45,122,79,0.15);
+  }
+
+  .opt-btn.correct .opt-meaning { color: var(--green); }
+  .opt-btn.correct .opt-furi { color: #4caf7d; }
+
+  .opt-btn.wrong {
+    background: #fde8e8;
+    border-color: var(--red);
+    animation: shake 0.35s ease;
+  }
+
+  .opt-btn.wrong .opt-meaning { color: var(--red); }
+  .opt-btn.wrong .opt-furi { color: #e07070; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    60% { transform: translateX(5px); }
+  }
+
+  .opt-btn:disabled { cursor: default; }
+
+  /* ── FEEDBACK ── */
+  .feedback {
+    margin-top: 18px;
+    min-height: 28px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all 0.3s;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── BOTTOM ROW ── */
+  .bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 18px;
+  }
+
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle-track {
+    width: 34px;
+    height: 20px;
+    border-radius: 99px;
+    background: var(--fold);
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle-track.on { background: var(--gold); }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .toggle-track.on .toggle-thumb { transform: translateX(14px); }
+
+  .next-btn {
+    padding: 10px 24px;
+    border-radius: 12px;
+    border: none;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+    display: none;
+  }
+
+  .next-btn:hover {
+    background: #2d2418;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px var(--shadow);
+  }
+
+  .next-btn.visible { display: block; }
+
+  /* ── HINT BTN ── */
+  .hint-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+
+  .hint-btn:hover { background: var(--fold); color: var(--ink); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+    opacity: 0;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 420px) {
+    .card { padding: 32px 20px 24px; }
+    .kanji-char { font-size: 90px; }
+    .score-num .big { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">N3-漢字<span>FLASH-CARD</span></div>
+    <div class="streak">
+      <span class="fire">🔥</span>
+      <span id="streakCount">0</span> streak
+    </div>
+  </header>
+
+  <!-- Score Bar -->
+  <div class="score-bar">
+    <div>
+      <div class="score-num">
+        <span class="big" id="scoreNum">0</span>
+        <span class="sep">/</span>
+        <span class="total" id="totalNum">0</span>
+      </div>
+      <div class="score-label">Correct</div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="accuracy-wrap">
+      <div class="accuracy-label">Accuracy</div>
+      <div class="accuracy-bar-bg">
+        <div class="accuracy-bar-fill" id="accBar" style="width:0%"></div>
+      </div>
+      <div class="accuracy-pct" id="accPct">–</div>
+    </div>
+    <div class="score-actions">
+      <button class="icon-btn" title="Review wrong answers" onclick="reviewWrong()">💢</button>
+      <button class="icon-btn danger" title="Reset score" onclick="resetScore()">↺</button>
+    </div>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="filter-scroll" id="filterTabs"></div>
+
+  <!-- Main Card -->
+  <div class="card">
+    <div class="card-progress"><div class="card-progress-fill" id="cardProgress"></div></div>
+    <div class="group-badge" id="groupBadge">All Kanji</div>
+
+    <div class="kanji-stage">
+      <span class="kanji-char" id="kanjiChar">–</span>
+      <div class="kanji-hint" id="kanjiHint"></div>
+    </div>
+
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+
+    <div class="bottom-row">
+      <div class="mode-toggle" onclick="toggleMode()">
+        <div class="toggle-track on" id="toggleTrack">
+          <div class="toggle-thumb"></div>
+        </div>
+        <span id="modeLabel">Auto-advance</span>
+      </div>
+      <button class="hint-btn" onclick="showHint()">👁 Reading</button>
+      <button class="next-btn" id="nextBtn" onclick="next()">Next →</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let data = [], filteredData = [], wrongAnswers = [];
+  let current = null;
+  let score = 0, total = 0, streak = 0;
+  let autoMode = true;
+  let answered = false;
+
+  const good = ["Sugoi! ✨", "Yatta! 🎉", "Kakkoii! 😎", "Kanpeki! 🌸", "Subarashii! ⭐"];
+  const bad  = ["Mou ichido! 💪", "Ganbare! 🔁", "Don't give up! 🌸", "Almost! 🎯"];
+
+  const groups = ["all","1-20","21-40","41-60","61-80","81-100","101-120","121-140","141-160","161-180","181-200","201-223"];
+
+  function buildTabs() {
+    const wrap = document.getElementById('filterTabs');
+    wrap.innerHTML = '';
+
+    groups.forEach(g => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-tab' + (g === 'all' ? ' active' : '');
+      btn.textContent = g === 'all' ? 'All' : g;
+      btn.dataset.group = g;
+      btn.onclick = () => applyFilter(g);
+      wrap.appendChild(btn);
+    });
+
+    // Wrong tab
+    const wBtn = document.createElement('button');
+    wBtn.className = 'filter-tab wrong-tab';
+    wBtn.textContent = '❌ Mistakes';
+    wBtn.dataset.group = 'wrong';
+    wBtn.onclick = reviewWrong;
+    wrap.appendChild(wBtn);
+  }
+
+  function applyFilter(g) {
+    document.querySelectorAll('.filter-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.group === g);
+    });
+    filteredData = g === 'all' ? [...data] : data.filter(k => k.group === g);
+    document.getElementById('groupBadge').textContent = g === 'all' ? 'All Kanji' : `Group ${g}`;
+    next();
+  }
+
+  function reviewWrong() {
+    if (wrongAnswers.length === 0) { showToast('No mistakes yet! 🎉'); return; }
+    document.querySelectorAll('.filter-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.group === 'wrong');
+    });
+    filteredData = [...wrongAnswers];
+    document.getElementById('groupBadge').textContent = 'Reviewing Mistakes';
+    next();
+  }
+
+  function resetScore() {
+    score = 0; total = 0; streak = 0; wrongAnswers = [];
+    updateScore();
+    showToast('Score reset ↺');
+  }
+
+  function updateScore() {
+    document.getElementById('scoreNum').textContent = score;
+    document.getElementById('totalNum').textContent = total;
+    document.getElementById('streakCount').textContent = streak;
+    const pct = total > 0 ? Math.round(score / total * 100) : 0;
+    document.getElementById('accBar').style.width = pct + '%';
+    document.getElementById('accPct').textContent = total > 0 ? pct + '%' : '–';
+    document.getElementById('cardProgress').style.width = pct + '%';
+  }
+
+  function toggleMode() {
+    autoMode = !autoMode;
+    const track = document.getElementById('toggleTrack');
+    track.classList.toggle('on', autoMode);
+    document.getElementById('modeLabel').textContent = autoMode ? 'Auto-advance' : 'Manual';
+  }
+
+  function showHint() {
+    const hint = document.getElementById('kanjiHint');
+    hint.classList.add('show');
+    if (current) hint.textContent = current.f + ' · ' + current.m;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function next() {
+    answered = false;
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('nextBtn').classList.remove('visible');
+    document.getElementById('kanjiHint').classList.remove('show');
+    document.getElementById('kanjiHint').textContent = '';
+
+    if (!filteredData || filteredData.length === 0) {
+      document.getElementById('kanjiChar').textContent = '?';
+      document.getElementById('options').innerHTML = '<div class="empty">No kanji in this group.</div>';
+      return;
+    }
+
+    // Pick random current (avoid immediate repeat if possible)
+    let pool = filteredData.filter(k => k !== current);
+    if (pool.length === 0) pool = filteredData;
+    current = pool[Math.floor(Math.random() * pool.length)];
+
+    // Animate kanji
+    const kanjiEl = document.getElementById('kanjiChar');
+    kanjiEl.textContent = current.kanji;
+    kanjiEl.classList.remove('pop');
+    void kanjiEl.offsetWidth; // reflow
+    kanjiEl.classList.add('pop');
+
+    // Build 4 options
+    let opts = [current];
+    let pool2 = data.filter(k => k !== current);
+    while (opts.length < 4 && pool2.length > 0) {
+      const idx = Math.floor(Math.random() * pool2.length);
+      opts.push(pool2.splice(idx, 1)[0]);
+    }
+    opts.sort(() => Math.random() - 0.5);
+
+    const box = document.getElementById('options');
+    box.innerHTML = '';
+
+    opts.forEach(o => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.innerHTML = `<span class="opt-meaning">${o.m}</span><span class="opt-furi">${o.f}</span>`;
+
+      btn.onclick = () => {
+        if (answered) return;
+        answered = true;
+        total++;
+
+        Array.from(box.children).forEach(b => b.disabled = true);
+
+        if (o === current) {
+          score++;
+          streak++;
+          btn.classList.add('correct');
+          document.getElementById('feedback').textContent = good[Math.floor(Math.random() * good.length)];
+          if (streak > 0 && streak % 5 === 0) showToast(`🔥 ${streak} in a row!`);
+        } else {
+          streak = 0;
+          btn.classList.add('wrong');
+          // Highlight correct
+          Array.from(box.children).forEach(b => {
+            if (b !== btn) {
+              // find the correct one
+              const m = b.querySelector('.opt-meaning').textContent;
+              if (m === current.m) b.classList.add('correct');
+            }
+          });
+          document.getElementById('feedback').textContent = bad[Math.floor(Math.random() * bad.length)];
+          if (!wrongAnswers.find(k => k.kanji === current.kanji)) wrongAnswers.push(current);
+        }
+
+        // Show reading hint after answer
+        document.getElementById('kanjiHint').textContent = current.f + ' · ' + current.m;
+        document.getElementById('kanjiHint').classList.add('show');
+
+        updateScore();
+
+        if (autoMode) {
+          setTimeout(() => next(), 1200);
+        } else {
+          document.getElementById('nextBtn').classList.add('visible');
+        }
+      };
+
+      box.appendChild(btn);
+    });
+  }
+
+  // Embedded kanji dataset — works with no server needed
+  data = [
+{"kanji":"使","f":"つかう","m":"use","group":"1-20"},{"kanji":"便","f":"べん","m":"convenience","group":"1-20"},{"kanji":"王","f":"おう","m":"king","group":"1-20"},{"kanji":"任","f":"にん","m":"duty","group":"1-20"},{"kanji":"主","f":"しゅ","m":"main","group":"1-20"},{"kanji":"住","f":"すむ","m":"live","group":"1-20"},{"kanji":"注","f":"ちゅう","m":"attention","group":"1-20"},{"kanji":"柱","f":"はしら","m":"pillar","group":"1-20"},{"kanji":"駐","f":"ちゅう","m":"parking","group":"1-20"},{"kanji":"立","f":"たつ","m":"stand","group":"1-20"},{"kanji":"位","f":"くらい","m":"rank","group":"1-20"},{"kanji":"泣","f":"なく","m":"cry","group":"1-20"},{"kanji":"中","f":"なか","m":"inside","group":"1-20"},{"kanji":"仲","f":"なか","m":"relationship","group":"1-20"},{"kanji":"代","f":"だい","m":"generation","group":"1-20"},{"kanji":"貸","f":"かす","m":"lend","group":"1-20"},{"kanji":"土","f":"つち","m":"soil","group":"1-20"},{"kanji":"仕","f":"し","m":"serve","group":"1-20"},{"kanji":"圧","f":"あつ","m":"pressure","group":"1-20"},{"kanji":"化","f":"か","m":"change","group":"1-20"},
+{"kanji":"花","f":"はな","m":"flower","group":"21-40"},{"kanji":"私","f":"わたし","m":"I","group":"21-40"},{"kanji":"仏","f":"ほとけ","m":"Buddha","group":"21-40"},{"kanji":"払","f":"はらう","m":"pay","group":"21-40"},{"kanji":"他","f":"ほか","m":"other","group":"21-40"},{"kanji":"池","f":"いけ","m":"pond","group":"21-40"},{"kanji":"地","f":"ち","m":"ground","group":"21-40"},{"kanji":"会","f":"あう","m":"meet","group":"21-40"},{"kanji":"伝","f":"つたえる","m":"convey","group":"21-40"},{"kanji":"芸","f":"げい","m":"art","group":"21-40"},{"kanji":"午","f":"ご","m":"noon","group":"21-40"},{"kanji":"牛","f":"うし","m":"cow","group":"21-40"},{"kanji":"件","f":"けん","m":"matter","group":"21-40"},{"kanji":"低","f":"ひくい","m":"low","group":"21-40"},{"kanji":"底","f":"そこ","m":"bottom","group":"21-40"},{"kanji":"紙","f":"かみ","m":"paper","group":"21-40"},{"kanji":"直","f":"なおす","m":"fix","group":"21-40"},{"kanji":"値","f":"ね","m":"value","group":"21-40"},{"kanji":"植","f":"うえる","m":"plant","group":"21-40"},{"kanji":"置","f":"おく","m":"put","group":"21-40"},
+{"kanji":"供","f":"とも","m":"companion","group":"41-60"},{"kanji":"借","f":"かりる","m":"borrow","group":"41-60"},{"kanji":"保","f":"ほ","m":"protect","group":"41-60"},{"kanji":"価","f":"か","m":"value","group":"41-60"},{"kanji":"悪","f":"わるい","m":"bad","group":"41-60"},{"kanji":"停","f":"てい","m":"stop","group":"41-60"},{"kanji":"言","f":"いう","m":"say","group":"41-60"},{"kanji":"信","f":"しん","m":"trust","group":"41-60"},{"kanji":"倍","f":"ばい","m":"double","group":"41-60"},{"kanji":"部","f":"ぶ","m":"part","group":"41-60"},{"kanji":"固","f":"かたい","m":"hard","group":"41-60"},{"kanji":"個","f":"こ","m":"individual","group":"41-60"},{"kanji":"糸","f":"いと","m":"thread","group":"41-60"},{"kanji":"係","f":"かかる","m":"relation","group":"41-60"},{"kanji":"孫","f":"まご","m":"grandchild","group":"41-60"},{"kanji":"衣","f":"ころも","m":"clothes","group":"41-60"},{"kanji":"依","f":"い","m":"depend","group":"41-60"},{"kanji":"愛","f":"あい","m":"love","group":"41-60"},{"kanji":"優","f":"やさしい","m":"kind","group":"41-60"},{"kanji":"意","f":"い","m":"meaning","group":"41-60"},
+{"kanji":"億","f":"おく","m":"hundred million","group":"61-80"},{"kanji":"偶","f":"ぐう","m":"accidentally","group":"61-80"},{"kanji":"隅","f":"すみ","m":"corner","group":"61-80"},{"kanji":"用","f":"よう","m":"use","group":"61-80"},{"kanji":"備","f":"そなえる","m":"prepare","group":"61-80"},{"kanji":"違","f":"ちがう","m":"different","group":"61-80"},{"kanji":"偉","f":"えらい","m":"great","group":"61-80"},{"kanji":"則","f":"そく","m":"rule","group":"61-80"},{"kanji":"側","f":"がわ","m":"side","group":"61-80"},{"kanji":"測","f":"はかる","m":"measure","group":"61-80"},{"kanji":"頭","f":"あたま","m":"head","group":"61-80"},{"kanji":"顔","f":"かお","m":"face","group":"61-80"},{"kanji":"傾","f":"かたむける","m":"lean","group":"61-80"},{"kanji":"貝","f":"かい","m":"shell","group":"61-80"},{"kanji":"具","f":"ぐ","m":"tool","group":"61-80"},{"kanji":"行","f":"いく","m":"go","group":"61-80"},{"kanji":"術","f":"じゅつ","m":"skill","group":"61-80"},{"kanji":"寺","f":"てら","m":"temple","group":"61-80"},{"kanji":"待","f":"まつ","m":"wait","group":"61-80"},
+{"kanji":"持","f":"もつ","m":"hold","group":"81-100"},{"kanji":"時","f":"とき","m":"time","group":"81-100"},{"kanji":"特","f":"とく","m":"special","group":"81-100"},{"kanji":"御","f":"ご","m":"honorific","group":"81-100"},{"kanji":"定","f":"てい","m":"decide","group":"81-100"},{"kanji":"従","f":"したがう","m":"follow","group":"81-100"},{"kanji":"書","f":"かく","m":"write","group":"81-100"},{"kanji":"律","f":"りつ","m":"law","group":"81-100"},{"kanji":"筆","f":"ふで","m":"brush","group":"81-100"},{"kanji":"津","f":"つ","m":"harbor","group":"81-100"},
+{"kanji":"研","f":"けんきゅう","m":"research","group":"101-120"},{"kanji":"形","f":"かたち","m":"shape","group":"101-120"},{"kanji":"収","f":"しゅうにゅう","m":"income","group":"101-120"},{"kanji":"取","f":"とる","m":"take","group":"101-120"},{"kanji":"厳","f":"きびしい","m":"strict","group":"101-120"},{"kanji":"枚","f":"まい","m":"counter","group":"101-120"},{"kanji":"放","f":"ほうそう","m":"release","group":"101-120"},{"kanji":"票","f":"とうひょう","m":"vote","group":"101-120"},{"kanji":"標","f":"もくひょう","m":"target","group":"101-120"},{"kanji":"機","f":"きかい","m":"machine","group":"101-120"},{"kanji":"講","f":"こうぎ","m":"lecture","group":"101-120"},{"kanji":"構","f":"こうぞう","m":"structure","group":"101-120"},{"kanji":"黄","f":"きいろ","m":"yellow","group":"101-120"},{"kanji":"横","f":"よこ","m":"side","group":"101-120"},{"kanji":"果","f":"くだもの","m":"fruit","group":"101-120"},{"kanji":"菓","f":"おかし","m":"sweets","group":"101-120"},{"kanji":"乗","f":"のる","m":"ride","group":"101-120"},{"kanji":"集","f":"あつめる","m":"gather","group":"101-120"},{"kanji":"条","f":"じょうけん","m":"condition","group":"101-120"},{"kanji":"柔","f":"やわらかい","m":"soft","group":"101-120"},
+{"kanji":"恐","f":"おそろしい","m":"scary","group":"121-140"},{"kanji":"築","f":"けんちく","m":"construction","group":"121-140"},{"kanji":"不","f":"ふべん","m":"not","group":"121-140"},{"kanji":"杯","f":"かんぱい","m":"cup","group":"121-140"},{"kanji":"古","f":"ふるい","m":"old","group":"121-140"},{"kanji":"枯","f":"かれる","m":"wither","group":"121-140"},{"kanji":"居","f":"いる","m":"exist","group":"121-140"},{"kanji":"材","f":"ざいりょう","m":"material","group":"121-140"},{"kanji":"財","f":"さいふ","m":"wealth","group":"121-140"},{"kanji":"相","f":"あいて","m":"partner","group":"121-140"},{"kanji":"想","f":"かんそう","m":"thought","group":"121-140"},{"kanji":"箱","f":"はこ","m":"box","group":"121-140"},{"kanji":"良","f":"よい","m":"good","group":"121-140"},{"kanji":"根","f":"ね","m":"root","group":"121-140"},{"kanji":"退","f":"たい","m":"retreat","group":"121-140"},{"kanji":"食","f":"たべる","m":"eat","group":"121-140"},{"kanji":"株","f":"かぶ","m":"stock","group":"121-140"},{"kanji":"味","f":"あじ","m":"taste","group":"121-140"},{"kanji":"妹","f":"いもうと","m":"sister","group":"121-140"},{"kanji":"各","f":"かく","m":"each","group":"121-140"},
+{"kanji":"客","f":"きゃく","m":"guest","group":"141-160"},{"kanji":"格","f":"せいかく","m":"status","group":"141-160"},{"kanji":"絡","f":"れんらく","m":"contact","group":"141-160"},{"kanji":"落","f":"おちる","m":"fall","group":"141-160"},{"kanji":"極","f":"きわめる","m":"extreme","group":"141-160"},{"kanji":"械","f":"きかい","m":"machine","group":"141-160"},{"kanji":"業","f":"そつぎょう","m":"graduation","group":"141-160"},{"kanji":"僕","f":"ぼく","m":"I (male)","group":"141-160"},{"kanji":"付","f":"つける","m":"attach","group":"141-160"},{"kanji":"府","f":"せいふ","m":"government","group":"141-160"},{"kanji":"符","f":"きっぷ","m":"ticket","group":"141-160"},{"kanji":"反","f":"はんたい","m":"opposition","group":"141-160"},{"kanji":"坂","f":"さか","m":"slope","group":"141-160"},{"kanji":"版","f":"しゅっぱん","m":"edition","group":"141-160"},{"kanji":"板","f":"こくばん","m":"board","group":"141-160"},{"kanji":"販","f":"はんばい","m":"selling","group":"141-160"},{"kanji":"仮","f":"かり","m":"temporary","group":"141-160"},{"kanji":"飯","f":"ごはん","m":"meal","group":"141-160"},{"kanji":"皮","f":"かわ","m":"skin","group":"141-160"},{"kanji":"破","f":"やぶれる","m":"tear","group":"141-160"},
+{"kanji":"波","f":"なみ","m":"wave","group":"161-180"},{"kanji":"疲","f":"つかれる","m":"tired","group":"161-180"},{"kanji":"彼","f":"かれ","m":"he","group":"161-180"},{"kanji":"感","f":"かんじる","m":"feel","group":"161-180"},{"kanji":"減","f":"へる","m":"decrease","group":"161-180"},{"kanji":"当","f":"あたる","m":"hit","group":"161-180"},{"kanji":"急","f":"いそぐ","m":"hurry","group":"161-180"},{"kanji":"思","f":"おもう","m":"think","group":"161-180"},{"kanji":"恵","f":"めぐむ","m":"bless","group":"161-180"},{"kanji":"非","f":"ひ","m":"negative","group":"161-180"},{"kanji":"俳","f":"はいゆう","m":"actor","group":"161-180"},{"kanji":"悲","f":"かなしい","m":"sad","group":"161-180"},{"kanji":"世","f":"せかい","m":"world","group":"161-180"},{"kanji":"葉","f":"は","m":"leaf","group":"161-180"},{"kanji":"夢","f":"ゆめ","m":"dream","group":"161-180"},{"kanji":"要","f":"いる","m":"need","group":"161-180"},{"kanji":"楽","f":"たのしい","m":"fun","group":"161-180"},{"kanji":"薬","f":"くすり","m":"medicine","group":"161-180"},{"kanji":"内","f":"うち","m":"inside","group":"161-180"},{"kanji":"肉","f":"にく","m":"meat","group":"161-180"},
+{"kanji":"病","f":"びょうき","m":"illness","group":"181-200"},{"kanji":"寮","f":"りょう","m":"dormitory","group":"181-200"},{"kanji":"療","f":"ちりょう","m":"treatment","group":"181-200"},{"kanji":"用","f":"ようじ","m":"business","group":"181-200"},{"kanji":"痛","f":"いたい","m":"pain","group":"181-200"},{"kanji":"通","f":"かよう","m":"commute","group":"181-200"},{"kanji":"皿","f":"さら","m":"plate","group":"181-200"},{"kanji":"温","f":"あたたかい","m":"warm","group":"181-200"},{"kanji":"塩","f":"しお","m":"salt","group":"181-200"},{"kanji":"浅","f":"あさい","m":"shallow","group":"181-200"},{"kanji":"残","f":"のこす","m":"remain","group":"181-200"},{"kanji":"深","f":"ふかい","m":"deep","group":"181-200"},{"kanji":"探","f":"さがす","m":"search","group":"181-200"},{"kanji":"並","f":"ならぶ","m":"line up","group":"181-200"},{"kanji":"湿","f":"しつど","m":"humidity","group":"181-200"},{"kanji":"決","f":"かいけつ","m":"decide","group":"181-200"},{"kanji":"快","f":"こころよい","m":"pleasant","group":"181-200"},{"kanji":"消","f":"けす","m":"erase","group":"181-200"},{"kanji":"削","f":"けずる","m":"shave","group":"181-200"},{"kanji":"氷","f":"こおり","m":"ice","group":"181-200"},
+{"kanji":"泳","f":"すいえい","m":"swim","group":"201-223"},{"kanji":"度","f":"ど","m":"degree","group":"201-223"},{"kanji":"渡","f":"わたる","m":"cross","group":"201-223"},{"kanji":"魚","f":"さかな","m":"fish","group":"201-223"},{"kanji":"漁","f":"ぎょ","m":"fishing","group":"201-223"},{"kanji":"流","f":"ながれる","m":"flow","group":"201-223"},{"kanji":"湖","f":"みずうみ","m":"lake","group":"201-223"},{"kanji":"巻","f":"まく","m":"roll","group":"201-223"},{"kanji":"港","f":"みなと","m":"harbor","group":"201-223"},{"kanji":"滴","f":"すいてき","m":"drop","group":"201-223"},{"kanji":"適","f":"てきとう","m":"suitable","group":"201-223"},{"kanji":"混","f":"まぜる","m":"mix","group":"201-223"},{"kanji":"皆","f":"みな","m":"everyone","group":"201-223"},{"kanji":"漢","f":"かんじ","m":"kanji","group":"201-223"},{"kanji":"難","f":"むずかしい","m":"difficult","group":"201-223"},{"kanji":"湯","f":"おゆ","m":"hot water","group":"201-223"},{"kanji":"場","f":"ばしょ","m":"place","group":"201-223"},{"kanji":"陽","f":"たいよう","m":"sun","group":"201-223"},{"kanji":"揚","f":"あげる","m":"raise","group":"201-223"},{"kanji":"羊","f":"ひつじ","m":"sheep","group":"201-223"},{"kanji":"洋","f":"ようふく","m":"western","group":"201-223"},{"kanji":"詳","f":"くわしい","m":"detailed","group":"201-223"},{"kanji":"治","f":"なおる","m":"heal","group":"201-223"}
+  ];
+  filteredData = [...data];
+  buildTabs();
+  next();
+</script>
+</body>
+</html>
